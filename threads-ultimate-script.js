@@ -1302,13 +1302,16 @@ function initAffiliateCalculator() {
 // ============================================
 // INITIALIZATION
 // ============================================
+// INITIALIZATION
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
     initLoadingScreen();
     initMobileOptimizations();
     initCustomCursor();
     initParallax();
     initSpaceBackground();
-    initRobot();
+    init3DScrollAnimation(); // 3D scroll animation with ball
+    init3DCharacter(); // 3D character model
     initScrollAnimations();
     initScrollProgress();
     initCountdownTimer();
@@ -1330,3 +1333,155 @@ document.addEventListener('DOMContentLoaded', () => {
     initRecentPurchases();
     initAffiliateCalculator();
 });
+
+
+// ============================================
+// 3D SCROLL ANIMATION (like Turbulent)
+// ============================================
+function init3DScrollAnimation() {
+    const canvas = document.getElementById('scroll-canvas');
+    if (!canvas) {
+        console.log('Canvas not found!');
+        return;
+    }
+    
+    console.log('3D Scroll Animation initialized!');
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Ball properties - BIGGER and BRIGHTER
+    const ball = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 60,
+        color: '#667eea',
+        shadowBlur: 50,
+        shadowColor: '#f093fb'
+    };
+    
+    // Path properties
+    const path = {
+        points: [],
+        segments: 100,
+        amplitude: 200,
+        frequency: 0.015
+    };
+    
+    // Generate wave path
+    function generatePath() {
+        path.points = [];
+        const scrollHeight = document.documentElement.scrollHeight;
+        for (let i = 0; i < path.segments; i++) {
+            const progress = i / path.segments;
+            const x = canvas.width / 2 + Math.sin(progress * Math.PI * 4) * 300;
+            const y = progress * scrollHeight;
+            path.points.push({ x, y });
+        }
+    }
+    
+    generatePath();
+    
+    // Draw path
+    function drawPath() {
+        ctx.strokeStyle = 'rgba(102, 126, 234, 0.5)';
+        ctx.lineWidth = 5;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        
+        const scrollY = window.pageYOffset;
+        
+        for (let i = 0; i < path.points.length; i++) {
+            const point = path.points[i];
+            const screenY = point.y - scrollY;
+            
+            if (screenY > -100 && screenY < canvas.height + 100) {
+                if (i === 0 || path.points[i-1].y - scrollY < -100) {
+                    ctx.moveTo(point.x, screenY);
+                } else {
+                    ctx.lineTo(point.x, screenY);
+                }
+            }
+        }
+        
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+    
+    // Draw ball
+    function drawBall() {
+        ctx.shadowBlur = ball.shadowBlur;
+        ctx.shadowColor = ball.shadowColor;
+        
+        // Outer glow
+        ctx.fillStyle = 'rgba(240, 147, 251, 0.3)';
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius + 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Gradient fill
+        const gradient = ctx.createRadialGradient(
+            ball.x - ball.radius / 3,
+            ball.y - ball.radius / 3,
+            0,
+            ball.x,
+            ball.y,
+            ball.radius
+        );
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.3, '#f093fb');
+        gradient.addColorStop(0.6, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(ball.x - ball.radius / 3, ball.y - ball.radius / 3, ball.radius / 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Update ball position based on scroll
+    function updateBallPosition() {
+        const scrollY = window.pageYOffset;
+        const scrollProgress = scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+        const pathIndex = Math.floor(scrollProgress * (path.points.length - 1));
+        
+        if (path.points[pathIndex]) {
+            ball.x = path.points[pathIndex].x;
+            ball.y = path.points[pathIndex].y - scrollY;
+        }
+    }
+    
+    // Animation loop
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        updateBallPosition();
+        drawPath();
+        drawBall();
+        
+        requestAnimationFrame(animate);
+    }
+    
+    // Scroll listener
+    window.addEventListener('scroll', () => {
+        // Animation loop handles this
+    });
+    
+    // Resize handler
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        generatePath();
+    });
+    
+    animate();
+    console.log('Animation started!');
+}

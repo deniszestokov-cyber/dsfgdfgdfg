@@ -9,6 +9,7 @@
     <title>PLAZMA Threads GPT - AI Lead Generation Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -137,6 +138,42 @@
             pointer-events: none;
         }
         
+        /* 3D Scroll Canvas */
+        .scroll-3d-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0;
+            display: none;
+        }
+        
+        #scroll-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* Hero section */
+        #hero {
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        #hero .container {
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* All sections should be above background */
+        .section {
+            position: relative;
+            z-index: 1;
+        }
+        
         /* Video Background */
         #hero-video {
             position: absolute;
@@ -161,249 +198,64 @@
         .parallax-medium { transform: translateY(var(--parallax-medium, 0)); }
         .parallax-fast { transform: translateY(var(--parallax-fast, 0)); }
         
-        /* Робот-гуманоид */
+        /* 3D Character container */
         #robot-container {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 30px;
+            right: 30px;
             z-index: 1000;
             cursor: pointer;
-        }
-        
-        #robot {
-            width: 120px;
-            height: 180px;
-            position: relative;
             transition: transform 0.3s;
         }
         
-        #robot-container:hover #robot {
-            transform: scale(1.05);
+        #robot-3d {
+            width: 200px;
+            height: 280px;
         }
         
-        /* Голова */
-        .robot-head {
-            width: 50px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 25px 25px 20px 20px;
-            position: absolute;
-            top: 0;
-            left: 35px;
-            transition: transform 0.3s;
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
-        }
-        
-        /* Антенна */
-        .robot-antenna {
-            width: 3px;
-            height: 12px;
-            background: #667eea;
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 2px;
-        }
-        
-        .robot-antenna::after {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: #f093fb;
-            border-radius: 50%;
-            position: absolute;
-            top: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 0 10px #f093fb;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
-            50% { opacity: 0.6; transform: translateX(-50%) scale(1.2); }
-        }
-        
-        /* Глаза */
-        .robot-eye {
-            width: 12px;
-            height: 12px;
-            background: #00ffff;
-            border-radius: 50%;
-            position: absolute;
-            top: 20px;
-            box-shadow: 0 0 10px #00ffff;
-            animation: blink 4s infinite;
-        }
-        
-        .robot-eye.left { left: 10px; }
-        .robot-eye.right { right: 10px; }
-        
-        @keyframes blink {
-            0%, 90%, 100% { height: 12px; opacity: 1; }
-            95% { height: 2px; opacity: 0.5; }
-        }
-        
-        /* Рот */
-        .robot-mouth {
-            width: 20px;
-            height: 3px;
-            background: #00ffff;
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 2px;
-            box-shadow: 0 0 5px #00ffff;
-        }
-        
-        /* Шея */
-        .robot-neck {
-            width: 30px;
-            height: 15px;
-            background: linear-gradient(135deg, #764ba2, #667eea);
-            position: absolute;
-            top: 60px;
-            left: 45px;
-            border-radius: 5px;
-        }
-        
-        /* Туловище */
-        .robot-body {
-            width: 70px;
-            height: 60px;
-            background: linear-gradient(135deg, #764ba2, #667eea);
-            border-radius: 15px;
-            position: absolute;
-            top: 75px;
-            left: 25px;
-            box-shadow: 0 10px 30px rgba(118, 75, 162, 0.6);
-        }
-        
-        /* Индикатор на груди */
-        .robot-chest-light {
-            width: 15px;
-            height: 15px;
-            background: #00ffff;
-            border-radius: 50%;
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 0 15px #00ffff;
-            animation: pulse 1.5s infinite;
-        }
-        
-        /* Руки */
-        .robot-arm {
-            width: 12px;
-            height: 50px;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-            border-radius: 8px;
-            position: absolute;
-            top: 80px;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-            transition: transform 0.5s ease;
-        }
-        
-        .robot-arm.left { 
-            left: 8px;
-            transform-origin: top center;
-        }
-        
-        .robot-arm.right { 
-            right: 8px;
-            animation: wave-right 3s infinite;
-        }
-        
-        /* При наведении левая рука поднимается */
-        #robot-container:hover .robot-arm.left {
-            transform: rotate(120deg) translateY(-10px);
-            animation: none;
-        }
-        
-        @keyframes wave-left {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-20deg); }
-        }
-        
-        @keyframes wave-right {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(20deg); }
-        }
-        
-        /* Кисти рук */
-        .robot-hand {
-            width: 15px;
-            height: 15px;
-            background: #667eea;
-            border-radius: 50%;
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.5);
-        }
-        
-        /* Ноги */
-        .robot-leg {
-            width: 18px;
-            height: 40px;
-            background: linear-gradient(180deg, #764ba2, #667eea);
-            border-radius: 8px;
-            position: absolute;
-            top: 135px;
-            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
-        }
-        
-        .robot-leg.left { left: 30px; }
-        .robot-leg.right { right: 30px; }
-        
-        /* Стопы */
-        .robot-foot {
-            width: 22px;
-            height: 10px;
-            background: #667eea;
-            border-radius: 5px;
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.5);
+        #robot-3d canvas {
+            display: block;
         }
         
         #robot-tooltip {
             position: absolute;
-            top: 10px;
-            left: -160px;
+            top: 20px;
+            left: -200px;
             transform: scale(0);
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 12px 20px;
-            border-radius: 12px;
+            background: linear-gradient(135deg, #00e5ff, #00d4ff);
+            padding: 16px 26px;
+            border-radius: 16px;
             white-space: nowrap;
-            font-weight: 600;
-            transition: transform 0.5s ease;
-            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5);
-            border: 2px solid #f093fb;
+            font-weight: 700;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 
+                0 12px 40px rgba(0, 229, 255, 0.4),
+                0 0 30px rgba(0, 229, 255, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            color: #000;
+            font-size: 18px;
         }
         
-        /* Стрелка от таблички к руке */
         #robot-tooltip::after {
             content: '';
             position: absolute;
-            right: -10px;
+            right: -14px;
             top: 50%;
             transform: translateY(-50%);
             width: 0;
             height: 0;
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-            border-left: 10px solid #667eea;
+            border-top: 14px solid transparent;
+            border-bottom: 14px solid transparent;
+            border-left: 14px solid #00e5ff;
         }
         
-        #robot-container:hover #robot-tooltip {
+        /* Show tooltip on scroll animation */
+        #robot-container.show-tooltip #robot-tooltip {
             transform: scale(1);
+        }
+        
+        #robot-container:hover {
+            transform: scale(1.05);
         }
         
         /* Градиенты и эффекты */
@@ -557,80 +409,132 @@
         }
         
         @media (max-width: 768px) {
+            /* Disable custom cursor on mobile */
+            body { cursor: auto !important; }
+            #custom-cursor, #cursor-trail, .cursor-particle { display: none !important; }
+            
             #menu-toggle { display: flex; }
             .loading-logo { font-size: 3rem; }
             
             /* Mobile optimizations */
-            .section { padding: 60px 15px; }
-            h1 { font-size: 2.5rem !important; }
-            h2 { font-size: 2rem !important; }
-            h3 { font-size: 1.5rem !important; }
-            .text-7xl { font-size: 2.5rem !important; }
-            .text-5xl { font-size: 2rem !important; }
-            .text-3xl { font-size: 1.5rem !important; }
-            .text-2xl { font-size: 1.25rem !important; }
-            .text-xl { font-size: 1.1rem !important; }
+            .section { padding: 40px 20px !important; }
+            .container { padding: 0 15px !important; }
+            
+            /* Typography - more aggressive scaling */
+            h1 { font-size: 2rem !important; line-height: 1.2 !important; }
+            h2 { font-size: 1.75rem !important; line-height: 1.3 !important; }
+            h3 { font-size: 1.35rem !important; line-height: 1.4 !important; }
+            .text-7xl { font-size: 2rem !important; }
+            .text-6xl { font-size: 1.75rem !important; }
+            .text-5xl { font-size: 1.5rem !important; }
+            .text-4xl { font-size: 1.35rem !important; }
+            .text-3xl { font-size: 1.25rem !important; }
+            .text-2xl { font-size: 1.15rem !important; }
+            .text-xl { font-size: 1.05rem !important; }
+            .text-lg { font-size: 1rem !important; }
             
             /* Hide robot on mobile */
-            #robot-container { display: none; }
+            #robot-container { display: none !important; }
             
-            /* Adjust scroll indicators */
+            /* Adjust scroll indicators - smaller and better positioned */
             .glass.rounded-xl.px-4.py-3 { 
-                transform: scale(0.8);
-                right: 10px !important;
-                top: 10px !important;
+                transform: scale(0.7) !important;
+                right: 5px !important;
+                top: 5px !important;
+                padding: 8px !important;
             }
             
             /* Mobile-friendly buttons */
             .btn-primary { 
-                padding: 12px 24px;
-                font-size: 1rem;
+                padding: 14px 28px !important;
+                font-size: 1rem !important;
+                width: 100%;
+                max-width: 100%;
             }
             
             /* Adjust grid layouts */
             .grid { 
                 grid-template-columns: 1fr !important;
-                gap: 1rem !important;
+                gap: 1.5rem !important;
             }
             
-            /* Calculator inputs */
+            /* Calculator inputs - larger touch targets */
             .calculator-input {
-                font-size: 1rem;
-                padding: 10px 12px;
+                font-size: 1.1rem !important;
+                padding: 14px 16px !important;
+                width: 100% !important;
             }
             
             /* Counter numbers */
             .counter-number {
-                font-size: 2rem !important;
+                font-size: 2.5rem !important;
             }
             
-            /* Activity feed - move to bottom */
+            /* Activity feed - hide on mobile to reduce clutter */
             #activity-feed {
-                bottom: 80px;
-                left: 10px;
-                max-width: calc(100vw - 20px);
+                display: none !important;
             }
             
             /* Chatbot adjustments */
             #chatbot-button {
-                width: 50px;
-                height: 50px;
-                bottom: 15px;
-                left: 15px;
+                width: 56px !important;
+                height: 56px !important;
+                bottom: 20px !important;
+                left: 20px !important;
+                font-size: 1.5rem !important;
             }
             
             #chatbot-window {
-                width: calc(100vw - 30px);
-                max-height: 400px;
-                bottom: 80px;
-                left: 15px;
+                width: calc(100vw - 20px) !important;
+                max-height: 70vh !important;
+                bottom: 90px !important;
+                left: 10px !important;
+                right: 10px !important;
             }
             
-            /* Online counter */
+            /* Online counter - smaller */
             .glass.rounded-xl.px-4.py-2 {
-                top: 70px !important;
-                right: 10px !important;
-                transform: scale(0.85);
+                top: 60px !important;
+                right: 5px !important;
+                transform: scale(0.75) !important;
+                padding: 6px 10px !important;
+            }
+            
+            /* Cards and glass elements */
+            .glass {
+                padding: 20px !important;
+            }
+            
+            /* Spacing adjustments */
+            .space-y-8 > * + * { margin-top: 1.5rem !important; }
+            .space-y-6 > * + * { margin-top: 1rem !important; }
+            .gap-8 { gap: 1.5rem !important; }
+            .gap-6 { gap: 1rem !important; }
+            
+            /* Make images responsive */
+            img { max-width: 100% !important; height: auto !important; }
+            
+            /* Slider adjustments */
+            input[type="range"].slider {
+                width: 100% !important;
+                height: 40px !important;
+            }
+            
+            /* Demo comments section */
+            #demo-comments .glass {
+                padding: 16px !important;
+            }
+            
+            /* Pricing cards */
+            .pricing-card {
+                margin-bottom: 1.5rem !important;
+            }
+            
+            /* Hide scroll progress circle on very small screens */
+            @media (max-width: 480px) {
+                .glass.rounded-xl.px-4.py-3 {
+                    display: none !important;
+                }
             }
         }
         
@@ -894,18 +798,10 @@
         </nav>
     </div>
     
-    <!-- Робот -->
+    <!-- Робот (3D персонаж в капюшоне) -->
     <div id="robot-container">
-        <div id="robot-tooltip">Закажи меня! 🤖</div>
-        <div id="robot">
-            <div class="robot-head">
-                <div class="robot-eye left"></div>
-                <div class="robot-eye right"></div>
-            </div>
-            <div class="robot-body"></div>
-            <div class="robot-arm left"></div>
-            <div class="robot-arm right"></div>
-        </div>
+        <div id="robot-tooltip">Привет! 👋</div>
+        <div id="robot-3d"></div>
     </div>
     
     <!-- ПРОБЛЕМА РЫНКА -->
@@ -1090,6 +986,11 @@
     
     <!-- HERO SECTION with Parallax & Video -->
     <section id="hero" class="section relative overflow-hidden min-h-screen flex items-center">
+        <!-- 3D Canvas for scroll animation -->
+        <div class="scroll-3d-canvas">
+            <canvas id="scroll-canvas"></canvas>
+        </div>
+        
         <!-- Video Background -->
         <video id="hero-video" autoplay muted loop playsinline>
             <source src="https://cdn.pixabay.com/vimeo/665239023/space-97679.mp4?width=1280&hash=f3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3" type="video/mp4">
@@ -4148,6 +4049,8 @@
         </div>
     </footer>
 
+    <script src="3d-scroll-animation.js"></script>
+    <script src="3d-character.js"></script>
     <script src="threads-ultimate-script.js"></script>
 </body>
 </html>
